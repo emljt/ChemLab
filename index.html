@@ -387,7 +387,7 @@
       document.getElementById('resNombre').innerText = "Consultando a Gemini...";
       document.getElementById('resEmoji').innerText = "⏳";
       document.getElementById('resFormula').innerText = "";
-      document.getElementById('resDesc').innerText = "Analizando reacción química y termodinámica en tiempo real...";
+      document.getElementById('resDesc').innerText = "Analizando reacción química en tiempo real...";
       document.getElementById('resExplicacion').innerText = "";
 
       const apiKey = localStorage.getItem('gemini_api_key');
@@ -402,7 +402,7 @@
         mostrarResultado(resultadoAI);
       } catch (err) {
         console.error("Error detallado:", err);
-        mostrarResultadoError("Error al conectar con Gemini", "Detalle técnico: " + err.message + ". Verifica que tu Clave API sea correcta y tenga permisos activos en Google AI Studio.");
+        mostrarResultadoError("Error al conectar con Gemini", "Detalle técnico: " + err.message);
       }
     }
 
