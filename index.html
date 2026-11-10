@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChemLab Craft - Edición Científica</title>
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --panel-bg: #151c2c;
+      --card-bg: #1e293b;
+      --accent: #00e676;
+      --accent-hover: #00b359;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #334155;
+      --glow: rgba(0, 230, 118, 0.2);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    header {
+      background: var(--panel-bg);
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+
+    h1 { font-size: 1.3rem; color: var(--accent); display: flex; align-items: center; gap: 8px; }
+
+    .api-key-container { display: flex; gap: 8px; align-items: center; }
+    input[type="password"] {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      width: 220px;
+    }
+
+    .main-layout { display: flex; flex: 1; overflow: hidden; }
+
+    /* Área de Trabajo (Laboratorio) */
+    .lab-area {
+      flex: 1;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at center, #1e293b 0%, #0b0f19 100%);
+      position: relative;
+    }
+
+    .slots-container {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+
+    .slot {
+      width: 120px;
+      height: 120px;
+      border: 2px dashed var(--border);
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--panel-bg);
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    .slot.active { border-color: var(--accent); box-shadow: 0 0 15px var(--glow); }
+    .slot .emoji { font-size: 2.5rem; }
+    .slot .name { font-size: 0.85rem; margin-top: 5px; text-align: center; font-weight: 600; }
+
+    .plus-sign { font-size: 2rem; color: var(--accent); font-weight: bold; }
+
+    .btn-fusionar {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      padding: 12px 30px;
+      border-radius: 30px;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: transform 0.2s, background 0.2s;
+      box-shadow: 0 4px 15px var(--glow);
+    }
+    .btn-fusionar:hover { background: var(--accent-hover); transform: scale(1.05); }
+
+    /* Resultado Científico */
+    .result-box {
+      margin-top: 25px;
+      background: var(--panel-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+      max-width: 550px;
+      width: 100%;
+      display: none;
+    }
+    .result-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .result-header .emoji { font-size: 2rem; }
+    .result-header .title { font-size: 1.2rem; color: var(--accent); }
+    .sec-desc { font-size: 0.9rem; margin-bottom: 10px; line-height: 1.4; }
+    .sec-detail { font-size: 0.82rem; color: var(--text-muted); background: var(--card-bg); padding: 10px; border-radius: 8px; }
+
+    /* Panel Lateral de Elementos */
+    .sidebar {
+      width: 340px;
+      background: var(--panel-bg);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar-header { padding: 15px; border-bottom: 1px solid var(--border); }
+    .sidebar-header input {
+      width: 100%;
+      padding: 8px 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+    }
+    .elements-grid {
+      flex: 1;
+      padding: 15px;
+      overflow-y: auto;
+      display: grid;
+      grid-template-columns: repeat( auto-fill, minmax(90px, 1fr) );
+      gap: 10px;
+    }
+    .elem-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 5px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+      transition: border-color 0.2s;
+    }
+    .elem-card:hover { border-color: var(--accent); }
+    .elem-card .emoji { font-size: 1.6rem; }
+    .elem-card .name { font-size: 0.75rem; text-align: center; margin-top: 4px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🧪 ChemLab Craft: Edición Científica</h1>
+    <div class="api-key-container">
+      <input type="password" id="apiKey" placeholder="Pegar Clave API de Gemini aquí..." onchange="guardarApiKey()">
+    </div>
+  </header>
+
+  <div class="main-layout">
+    <div class="lab-area">
+      <div class="slots-container">
+        <div class="slot" id="slot1" onclick="limpiarSlot(1)">
+          <span class="emoji">❓</span>
+          <span class="name">Elemento 1</span>
+        </div>
+        <span class="plus-sign">+</span>
+        <div class="slot" id="slot2" onclick="limpiarSlot(2)">
+          <span class="emoji">❓</span>
+          <span class="name">Elemento 2</span>
+        </div>
+      </div>
+
+      <button class="btn-fusionar" onclick="ejecutarFusion()">⚡ Reaccionar / Combinar</button>
+
+      <div class="result-box" id="resultBox">
+        <div class="result-header">
+          <span class="emoji" id="resEmoji">🧪</span>
+          <div>
+            <div class="title" id="resNombre">Resultado</div>
+            <small style="color: var(--accent)" id="resFormula"></small>
+          </div>
+        </div>
+        <div class="sec-desc" id="resDesc">...</div>
+        <div class="sec-detail" id="resExplicacion">...</div>
+      </div>
+    </div>
+
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <input type="text" id="busqueda" placeholder="Buscar elemento..." oninput="filtrarElementos()">
+      </div>
+      <div class="elements-grid" id="gridElementos"></div>
+    </div>
+  </div>
+
+  <script>
+    // Catálogo Inicial con más de 100 elementos
+    const elementosBase = [
+      { id: 'h2o', nombre: 'Agua', emoji: '💧', cat: 'Química' },
+      { id: 'fe', nombre: 'Hierro', emoji: '⚙️', cat: 'Elementos' },
+      { id: 'fuego', nombre: 'Fuego', emoji: '🔥', cat: 'Energía' },
+      { id: 'aire', nombre: 'Aire', emoji: '🌬️', cat: 'Elementos' },
+      { id: 'tierra', nombre: 'Tierra', emoji: '🌱', cat: 'Elementos' },
+      { id: 'o2', nombre: 'Oxígeno', emoji: '🫧', cat: 'Química' },
+      { id: 'c', nombre: 'Carbono', emoji: '⬛', cat: 'Química' },
+      { id: 'sal', nombre: 'Sal', emoji: '🧂', cat: 'Química' },
+      { id: 'sol', nombre: 'Luz Solar', emoji: '☀️', cat: 'Energía' },
+      { id: 'rayo', nombre: 'Electricidad', emoji: '⚡', cat: 'Energía' },
+      { id: 'oro', nombre: 'Oro', emoji: '🪙', cat: 'Elementos' },
+      { id: 'cobre', nombre: 'Cobre', emoji: '🔌', cat: 'Elementos' },
+      { id: 'arena', nombre: 'Arena', emoji: '🏖️', cat: 'Materiales' },
+      { id: 'vidrio', nombre: 'Vidrio', emoji: '🔍', cat: 'Materiales' },
+      { id: 'madera', nombre: 'Madera', emoji: '🪵', cat: 'Materiales' },
+      { id: 'petroleo', nombre: 'Petróleo', emoji: '🛢️', cat: 'Materiales' },
+      { id: 'plastico', nombre: 'Plástico', emoji: '🥤', cat: 'Materiales' },
+      { id: 'papel', nombre: 'Papel', emoji: '📄', cat: 'Materiales' },
+      { id: 'iman', nombre: 'Imán', emoji: '🧲', cat: 'Tecnología' },
+      { id: 'bateria', nombre: 'Batería', emoji: '🔋', cat: 'Tecnología' },
+      { id: 'planta', nombre: 'Planta', emoji: '🌿', cat: 'Biología' },
+      { id: 'bacteria', nombre: 'Bacteria', emoji: '🦠', cat: 'Biología' },
+      { id: 'adn', nombre: 'ADN', emoji: '🧬', cat: 'Biología' },
+      { id: 'azucar', nombre: 'Azúcar', emoji: '🍬', cat: 'Alimentos' },
+      { id: 'aceite', nombre: 'Aceite', emoji: '🫗', cat: 'Alimentos' },
+      { id: 'leche', nombre: 'Leche', emoji: '🥛', cat: 'Alimentos' },
+      { id: 'pan', nombre: 'Pan', emoji: '🍞', cat: 'Alimentos' },
+      { id: 'huevo', nombre: 'Huevo', emoji: '🥚', cat: 'Alimentos' },
+      { id: 'carne', nombre: 'Carne', emoji: '🥩', cat: 'Alimentos' },
+      { id: 'hielo', nombre: 'Hielo', emoji: '🧊', cat: 'Química' },
+      { id: 'vapor', nombre: 'Vapor', emoji: '♨️', cat: 'Química' },
+      { id: 'acido', nombre: 'Ácido Clorhídrico', emoji: '🧪', cat: 'Química' },
+      { id: 'helio', nombre: 'Helio', emoji: '🎈', cat: 'Química' },
+      { id: 'mercurio', nombre: 'Mercurio', emoji: '🌡️', cat: 'Elementos' },
+      { id: 'plomo', nombre: 'Plomo', emoji: '🏋️', cat: 'Elementos' },
+      { id: 'uranio', nombre: 'Uranio', emoji: '☢️', cat: 'Elementos' },
+      { id: 'carbon', nombre: 'Carbón', emoji: '🪨', cat: 'Materiales' },
+      { id: 'diamante', nombre: 'Diamante', emoji: '💎', cat: 'Materiales' },
+      { id: 'cuarzo', nombre: 'Cuarzo', emoji: '🔮', cat: 'Materiales' },
+      { id: 'arcilla', nombre: 'Arcilla', emoji: '🧱', cat: 'Materiales' },
+      { id: 'polvo', nombre: 'Polvo', emoji: '🧹', cat: 'Materiales' },
+      { id: 'lodo', nombre: 'Lodo', emoji: '💩', cat: 'Materiales' },
+      { id: 'pluma', nombre: 'Pluma', emoji: '🪶', cat: 'Biología' },
+      { id: 'sangre', nombre: 'Sangre', emoji: '🩸', cat: 'Biología' },
+      { id: 'hueso', nombre: 'Hueso', emoji: '🦴', cat: 'Biología' },
+      { id: 'semilla', nombre: 'Semilla', emoji: '🌱', cat: 'Biología' },
+      { id: 'fruta', nombre: 'Manzana', emoji: '🍎', cat: 'Biología' },
+      { id: 'hongo', nombre: 'Hongo', emoji: '🍄', cat: 'Biología' },
+      { id: 'algas', nombre: 'Algas', emoji: '🪸', cat: 'Biología' },
+      { id: 'vinagre', nombre: 'Vinagre', emoji: '🍾', cat: 'Química' },
+      { id: 'bicarbonato', nombre: 'Bicarbonato de Sodio', emoji: '⚪', cat: 'Química' },
+      { id: 'alcohol', nombre: 'Alcohol etílico', emoji: '🧴', cat: 'Química' },
+      { id: 'jabon', nombre: 'Jabón', emoji: '🧼', cat: 'Química' },
+      { id: 'cera', nombre: 'Cera', emoji: '🕯️', cat: 'Materiales' },
+      { id: 'goma', nombre: 'Caucho', emoji: '🛞', cat: 'Materiales' },
+      { id: 'cuero', nombre: 'Cuero', emoji: '👞', cat: 'Materiales' },
+      { id: 'lana', nombre: 'Lana', emoji: '🧶', cat: 'Materiales' },
+      { id: 'algodon', nombre: 'Algodón', emoji: '☁️', cat: 'Materiales' },
+      { id: 'seda', nombre: 'Seda', emoji: '🎗️', cat: 'Materiales' },
+      { id: 'tinta', nombre: 'Tinta', emoji: '✒️', cat: 'Materiales' },
+      { id: 'pintura', nombre: 'Pintura', emoji: '🎨', cat: 'Materiales' },
+      { id: 'espejo', nombre: 'Espejo', emoji: '🪞', cat: 'Tecnología' },
+      { id: 'lente', nombre: 'Lente de aumento', emoji: '🔍', cat: 'Tecnología' },
+      { id: 'circuito', nombre: 'Chip de Silicona', emoji: '💻', cat: 'Tecnología' },
+      { id: 'motor', nombre: 'Motor', emoji: '⚙️', cat: 'Tecnología' },
+      { id: 'laser', nombre: 'Láser', emoji: '🔴', cat: 'Tecnología' },
+      { id: 'radio', nombre: 'Onda de Radio', emoji: '📻', cat: 'Energía' },
+      { id: 'calor', nombre: 'Radiación Infrarroja', emoji: '♨️', cat: 'Energía' },
+      { id: 'gravedad', nombre: 'Gravedad', emoji: '🌌', cat: 'Energía' },
+      { id: 'vacio', nombre: 'Vacío Space', emoji: '🌑', cat: 'Energía' },
+      { id: 'sonido', nombre: 'Onda Sonora', emoji: '🔊', cat: 'Energía' },
+      { id: 'plasma', nombre: 'Plasma', emoji: '🔮', cat: 'Energía' },
+      { id: 'cafe', nombre: 'Grano de Café', emoji: '☕', cat: 'Alimentos' },
+      { id: 'te', nombre: 'Té', emoji: '🍵', cat: 'Alimentos' },
+      { id: 'miel', nombre: 'Miel', emoji: '🍯', cat: 'Alimentos' },
+      { id: 'harina', nombre: 'Harina de Trigo', emoji: '🌾', cat: 'Alimentos' },
+      { id: 'levadura', nombre: 'Levadura', emoji: '🧫', cat: 'Biología' },
+      { id: 'queso', nombre: 'Queso', emoji: '🧀', cat: 'Alimentos' },
+      { id: 'mantequilla', nombre: 'Mantequilla', emoji: '🧈', cat: 'Alimentos' },
+      { id: 'chocolate', nombre: 'Cacao', emoji: '🍫', cat: 'Alimentos' },
+      { id: 'saliva', nombre: 'Enzima Digestiva', emoji: '💧', cat: 'Biología' },
+      { id: 'clorofila', nombre: 'Clorofila', emoji: '🟢', cat: 'Biología' },
+      { id: 'veneno', nombre: 'Toxina Orgánica', emoji: '☠️', cat: 'Biología' },
+      { id: 'polen', nombre: 'Polen', emoji: '🌼', cat: 'Biología' },
+      { id: 'espora', nombre: 'Espora', emoji: '💨', cat: 'Biología' },
+      { id: 'nieve', nombre: 'Nieve', emoji: '🌨️', cat: 'Química' },
+      { id: 'ozono', nombre: 'Ozono (O3)', emoji: '🌫️', cat: 'Química' },
+      { id: 'amoniaco', nombre: 'Amoníaco (NH3)', emoji: '🧪', cat: 'Química' },
+      { id: 'azufre', nombre: 'Azufre (S)', emoji: '🟡', cat: 'Elementos' },
+      { id: 'fosforo', nombre: 'Fósforo (P)', emoji: '🔴', cat: 'Elementos' },
+      { id: 'sodio', nombre: 'Sodio Metallico', emoji: '🔘', cat: 'Elementos' },
+      { id: 'cloro', nombre: 'Gas Cloro', emoji: '🟢', cat: 'Elementos' },
+      { id: 'calcio', nombre: 'Calcio', emoji: '🦴', cat: 'Elementos' },
+      { id: 'potasio', nombre: 'Potasio', emoji: '🍌', cat: 'Elementos' },
+      { id: 'silicio', nombre: 'Silicona / Silicio', emoji: '🪨', cat: 'Elementos' },
+      { id: 'aluminio', nombre: 'Aluminio', emoji: '📄', cat: 'Elementos' },
+      { id: 'titanio', nombre: 'Titanio', emoji: '🛡️', cat: 'Elementos' },
+      { id: 'plata', nombre: 'Plata', emoji: '🥈', cat: 'Elementos' },
+      { id: 'niquel', nombre: 'Níquel', emoji: '🪙', cat: 'Elementos' },
+      { id: 'zinc', nombre: 'Zinc', emoji: '🔩', cat: 'Elementos' }
+    ];
+
+    let miInventario = [...elementosBase];
+    let slot1 = null;
+    let slot2 = null;
+
+    // Inicializar Interfaz
+    window.onload = () => {
+      const savedKey = localStorage.getItem('gemini_api_key') || '';
+      document.getElementById('apiKey').value = savedKey;
+      renderizarElementos(miInventario);
+    };
+
+    function guardarApiKey() {
+      const key = document.getElementById('apiKey').value;
+      localStorage.setItem('gemini_api_key', key);
+    }
+
+    function renderizarElementos(lista) {
+      const grid = document.getElementById('gridElementos');
+      grid.innerHTML = '';
+      lista.forEach(el => {
+        const card = document.createElement('div');
+        card.className = 'elem-card';
+        card.innerHTML = `<span class="emoji">${el.emoji}</span><span class="name">${el.nombre}</span>`;
+        card.onclick = () => seleccionarElemento(el);
+        grid.appendChild(card);
+      });
+    }
+
+    function filtrarElementos() {
+      const q = document.getElementById('busqueda').value.toLowerCase();
+      const filtrados = miInventario.filter(e => e.nombre.toLowerCase().includes(q) || e.cat.toLowerCase().includes(q));
+      renderizarElementos(filtrados);
+    }
+
+    function seleccionarElemento(el) {
+      if (!slot1) {
+        slot1 = el;
+        actualizarSlotUI(1, el);
+      } else if (!slot2) {
+        slot2 = el;
+        actualizarSlotUI(2, el);
+      } else {
+        slot1 = el;
+        actualizarSlotUI(1, el);
+      }
+    }
+
+    function actualizarSlotUI(num, el) {
+      const slot = document.getElementById(`slot${num}`);
+      if (el) {
+        slot.classList.add('active');
+        slot.querySelector('.emoji').innerText = el.emoji;
+        slot.querySelector('.name').innerText = el.nombre;
+      } else {
+        slot.classList.remove('active');
+        slot.querySelector('.emoji').innerText = '❓';
+        slot.querySelector('.name').innerText = `Elemento ${num}`;
+      }
+    }
+
+    function limpiarSlot(num) {
+      if (num === 1) { slot1 = null; actualizarSlotUI(1, null); }
+      if (num === 2) { slot2 = null; actualizarSlotUI(2, null); }
+    }
+
+    async function ejecutarFusion() {
+      if (!slot1 || !slot2) {
+        alert('Por favor selecciona 2 elementos de la lista derecha para hacer la combinación.');
+        return;
+      }
+
+      const resBox = document.getElementById('resultBox');
+      resBox.style.display = 'block';
+      document.getElementById('resNombre').innerText = "Consultando a Gemini...";
+      document.getElementById('resEmoji').innerText = "⏳";
+      document.getElementById('resFormula').innerText = "";
+      document.getElementById('resDesc').innerText = "Analizando reacción química y termodinámica en tiempo real...";
+      document.getElementById('resExplicacion').innerText = "";
+
+      const apiKey = localStorage.getItem('gemini_api_key');
+
+      if (apiKey && apiKey.trim() !== "") {
+        try {
+          const resultadoAI = await llamarGeminiAPI(slot1.nombre, slot2.nombre, apiKey);
+          mostrarResultado(resultadoAI);
+        } catch (err) {
+          console.error(err);
+          alert('Hubo un error con la API Key de Gemini. Usando motor simulado.');
+          generarResultadoSimulado();
+        }
+      } else {
+        setTimeout(() => generarResultadoSimulado(), 800);
+      }
+    }
+
+    async function llamarGeminiAPI(el1, el2, key) {
+      const prompt = `Analiza detalladamente la interacción entre "${el1}" y "${el2}". Proporciona una explicación científica rigurosa y realista (o científicamente fundamentada). Devuelve un JSON estructurado con el nombre del compuesto/producto resultante, un emoji representativo, fórmula química aproximada o símbolo, una descripción del fenómeno (tipo de enlace, termodinámica o transferencia de energía), y su aplicación práctica o científica real.`;
+
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: "OBJECT",
+              properties: {
+                nombreResultante: { type: "STRING" },
+                emoji: { type: "STRING" },
+                formulaQuimica: { type: "STRING" },
+                mecanismoReaccion: { type: "STRING" },
+                explicacionCientifica: { type: "STRING" }
+              },
+              required: ["nombreResultante", "emoji", "formulaQuimica", "mecanismoReaccion", "explicacionCientifica"]
+            }
+          }
+        })
+      });
+
+      const data = await response.json();
+      const rawJson = data.candidates[0].content.parts[0].text;
+      return JSON.parse(rawJson);
+    }
+
+    function generarResultadoSimulado() {
+      const sim = {
+        nombreResultante: `${slot1.nombre} de ${slot2.nombre}`,
+        emoji: '🧪',
+        formulaQuimica: `[${slot1.nombre.slice(0,2)}-${slot2.nombre.slice(0,2)}]`,
+        mecanismoReaccion: `Mezcla física/química generada entre ${slot1.nombre} y ${slot2.nombre}.`,
+        explicacionCientifica: `(Modo sin API Key): Para obtener análisis detallados con Gemini 2.5 Flash, introduce una clave gratuita de Google AI Studio en el cuadro superior.`
+      };
+      mostrarResultado(sim);
+    }
+
+    function mostrarResultado(res) {
+      document.getElementById('resNombre').innerText = res.nombreResultante;
+      document.getElementById('resEmoji').innerText = res.emoji;
+      document.getElementById('resFormula').innerText = res.formulaQuimica ? `Fórmula/Símbolo: ${res.formulaQuimica}` : '';
+      document.getElementById('resDesc').innerText = res.mecanismoReaccion;
+      document.getElementById('resExplicacion').innerText = res.explicacionCientifica;
+
+      // Agregar nuevo elemento descubierto si no existe en el inventario
+      const yaExiste = miInventario.some(e => e.nombre.toLowerCase() === res.nombreResultante.toLowerCase());
+      if (!yaExiste) {
+        const nuevoObj = {
+          id: 'desc_' + Date.now(),
+          nombre: res.nombreResultante,
+          emoji: res.emoji,
+          cat: 'Descubrimientos'
+        };
+        miInventario.unshift(nuevoObj);
+        renderizarElementos(miInventario);
+      }
+    }
+  </script>
+</body>
+</html>
