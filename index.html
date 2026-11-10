@@ -16,9 +16,7 @@
       --border: #334155;
       --glow: rgba(0, 230, 118, 0.2);
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
       background-color: var(--bg);
@@ -28,7 +26,6 @@
       height: 100vh;
       overflow: hidden;
     }
-
     header {
       background: var(--panel-bg);
       padding: 12px 20px;
@@ -37,12 +34,9 @@
       align-items: center;
       border-bottom: 1px solid var(--border);
     }
-
     h1 { font-size: 1.3rem; color: var(--accent); display: flex; align-items: center; gap: 8px; }
     .badge-modo { font-size: 0.75rem; background: #00e67633; color: var(--accent); padding: 4px 10px; border-radius: 20px; font-weight: bold; }
-
     .main-layout { display: flex; flex: 1; overflow: hidden; }
-
     .lab-area {
       flex: 1;
       padding: 20px;
@@ -54,14 +48,12 @@
       position: relative;
       overflow-y: auto;
     }
-
     .slots-container {
       display: flex;
       align-items: center;
       gap: 15px;
       margin-bottom: 25px;
     }
-
     .slot {
       width: 120px;
       height: 120px;
@@ -78,9 +70,7 @@
     .slot.active { border-color: var(--accent); box-shadow: 0 0 15px var(--glow); }
     .slot .emoji { font-size: 2.5rem; }
     .slot .name { font-size: 0.85rem; margin-top: 5px; text-align: center; font-weight: 600; }
-
     .plus-sign { font-size: 2rem; color: var(--accent); font-weight: bold; }
-
     .btn-fusionar {
       background: var(--accent);
       color: #000;
@@ -94,7 +84,6 @@
       box-shadow: 0 4px 15px var(--glow);
     }
     .btn-fusionar:hover { background: var(--accent-hover); transform: scale(1.05); }
-
     .result-box {
       margin-top: 25px;
       background: var(--panel-bg);
@@ -110,7 +99,6 @@
     .result-header .title { font-size: 1.2rem; color: var(--accent); }
     .sec-desc { font-size: 0.9rem; margin-bottom: 10px; line-height: 1.4; }
     .sec-detail { font-size: 0.82rem; color: var(--text-muted); background: var(--card-bg); padding: 10px; border-radius: 8px; }
-
     .sidebar {
       width: 340px;
       background: var(--panel-bg);
@@ -156,7 +144,7 @@
 
   <header>
     <h1>🧪 ChemLab Craft</h1>
-    <span class="badge-modo">⚡ Motor Científico Integrado</span>
+    <span class="badge-modo">⚡ Laboratorio Activo</span>
   </header>
 
   <div class="main-layout">
@@ -368,26 +356,25 @@
       document.getElementById('resNombre').innerText = "Calculando reacción...";
       document.getElementById('resEmoji').innerText = "⏳";
       document.getElementById('resFormula').innerText = "";
-      document.getElementById('resDesc').innerText = "Analizando termodinámica y enlaces moleculares...";
+      document.getElementById('resDesc').innerText = "Analizando enlaces moleculares...";
       document.getElementById('resExplicacion').innerText = "";
 
       setTimeout(() => {
         const resultado = calcularReaccionCientifica(slot1.nombre, slot2.nombre);
         mostrarResultado(resultado);
-      }, 500);
+      }, 400);
     }
 
     function calcularReaccionCientifica(n1, n2) {
       const par = [n1.toLowerCase(), n2.toLowerCase()];
 
-      // Base de conocimientos científicos incorporados
       if (par.includes('vinagre') && par.includes('bicarbonato de sodio')) {
         return {
           nombreResultante: "Acetato de Sodio y Efervescencia",
           emoji: "🌋",
           formulaQuimica: "NaHCO3 + CH3COOH -> NaCH3COO + H2O + CO2",
           mecanismoReaccion: "Reacción ácido-base de neutralización con liberación rápida de gas dióxido de carbono.",
-          explicacionCientifica: "El ácido acético del vinagre reacciona con el bicarbonato de sodio, liberando gas CO2 que genera la efervescencia característica y produce acetato de sodio disuelto."
+          explicacionCientifica: "El ácido acético del vinagre reacciona con el bicarbonato de sodio, liberando gas CO2 que genera la efervescencia característica."
         };
       }
       if (par.includes('agua') && par.includes('fuego')) {
@@ -396,16 +383,7 @@
           emoji: "♨️",
           formulaQuimica: "H2O(l) + Calor -> H2O(g)",
           mecanismoReaccion: "Cambio de estado físico endotérmico por transferencia de calor.",
-          explicacionCientifica: "El agua absorbe la energía térmica del fuego superando su calor latente de vaporización, pasando del estado líquido al gaseoso de forma acelerada."
-        };
-      }
-      if (par.includes('sodio metálico') && par.includes('agua')) {
-        return {
-          nombreResultante: "Hidróxido de Sodio e Hidrógeno",
-          emoji: "💥",
-          formulaQuimica: "2Na + 2H2O -> 2NaOH + H2 + Energía",
-          mecanismoReaccion: "Reacción exotérmica violenta de sustitución simple (redox).",
-          explicacionCientifica: "El sodio metálico reacciona vigorosamente con el agua liberando gas hidrógeno y calor suficiente para encenderlo, formando una solución alcalina de hidróxido de sodio."
+          explicacionCientifica: "El agua absorbe la energía térmica superando su calor latente de vaporización, pasando a estado gaseoso."
         };
       }
       if (par.includes('hierro') && par.includes('oxígeno')) {
@@ -414,26 +392,16 @@
           emoji: "🧱",
           formulaQuimica: "4Fe + 3O2 -> 2Fe2O3",
           mecanismoReaccion: "Reacción de oxidación-reducción (corrosión atmosférica).",
-          explicacionCientifica: "Los átomos de hierro pierden electrones al combinarse con el oxígeno en presencia de humedad ambiental, formando una red cristalina frágil de óxido férrico hidratado."
-        };
-      }
-      if (par.includes('azúcar') && par.includes('fuego')) {
-        return {
-          nombreResultante: "Caramelo y Carbonización",
-          emoji: "🔥",
-          formulaQuimica: "C12H22O11 + Calor -> C + H2O",
-          mecanismoReaccion: "Pirólisis y deshidratación térmica de carbohidratos.",
-          explicacionCientifica: "El calor funde la sacarosa provocando polimerización (caramelización) y, al continuar el calentamiento, rompe los enlaces moleculares liberando vapor de agua y dejando carbón puro."
+          explicacionCientifica: "Los átomos de hierro pierden electrones al combinarse con el oxígeno ambiental, formando óxido férrico hidratado."
         };
       }
 
-      // Respuesta dinámica científica genérica inteligente basada en los tipos
       return {
         nombreResultante: `${slot1.nombre} Modificado por ${slot2.nombre}`,
         emoji: slot2.emoji,
         formulaQuimica: `Complex[${slot1.nombre.slice(0,3).toUpperCase()}-${slot2.nombre.slice(0,3).toUpperCase()}]`,
         mecanismoReaccion: `Interacción fisicoquímica directa entre ${slot1.nombre} y ${slot2.nombre}.`,
-        explicacionCientifica: `Al combinar ${slot1.nombre} con ${slot2.nombre} se produce una transferencia de energía o reordenamiento estructural. Dependiendo de las condiciones de presión y temperatura, este nuevo compuesto sintetizado altera sus propiedades termodinámicas originales.`
+        explicacionCientifica: `Al combinar ${slot1.nombre} con ${slot2.nombre} se produce una transferencia energética y un reordenamiento molecular que altera sus propiedades termodinámicas originales.`
       };
     }
 
