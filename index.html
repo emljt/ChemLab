@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ChemLab Craft - Edición Científica</title>
+  <title>ChemLab Craft - Edición Gemini en Vivo</title>
   <style>
     :root {
       --bg: #0b0f19;
@@ -35,7 +35,16 @@
       border-bottom: 1px solid var(--border);
     }
     h1 { font-size: 1.3rem; color: var(--accent); display: flex; align-items: center; gap: 8px; }
-    .badge-ia { font-size: 0.75rem; background: #00e67633; color: var(--accent); padding: 4px 10px; border-radius: 20px; font-weight: bold; }
+    .api-key-container { display: flex; gap: 8px; align-items: center; }
+    input[type="password"] {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      width: 260px;
+    }
     .main-layout { display: flex; flex: 1; overflow: hidden; }
     .lab-area {
       flex: 1;
@@ -143,8 +152,10 @@
 <body>
 
   <header>
-    <h1>🧪 ChemLab Craft</h1>
-    <span class="badge-ia">🧠 Motor Científico Avanzado</span>
+    <h1>🧪 ChemLab Craft: Gemini Edition</h1>
+    <div class="api-key-container">
+      <input type="password" id="apiKey" placeholder="Pegar Clave API de Gemini aquí..." onchange="guardarApiKey()">
+    </div>
   </header>
 
   <div class="main-layout">
@@ -292,7 +303,16 @@
     let slot1 = null;
     let slot2 = null;
 
-    window.onload = () => { renderizarElementos(miInventario); };
+    window.onload = () => {
+      const savedKey = localStorage.getItem('gemini_api_key') || '';
+      document.getElementById('apiKey').value = savedKey;
+      renderizarElementos(miInventario);
+    };
+
+    function guardarApiKey() {
+      const key = document.getElementById('apiKey').value.trim();
+      localStorage.setItem('gemini_api_key', key);
+    }
 
     function renderizarElementos(lista) {
       const grid = document.getElementById('gridElementos');
@@ -313,9 +333,16 @@
     }
 
     function seleccionarElemento(el) {
-      if (!slot1) { slot1 = el; actualizarSlotUI(1, el); }
-      else if (!slot2) { slot2 = el; actualizarSlotUI(2, el); }
-      else { slot1 = el; actualizarSlotUI(1, el); }
+      if (!slot1) {
+        slot1 = el;
+        actualizarSlotUI(1, el);
+      } else if (!slot2) {
+        slot2 = el;
+        actualizarSlotUI(2, el);
+      } else {
+        slot1 = el;
+        actualizarSlotUI(1, el);
+      }
     }
 
     function actualizarSlotUI(num, el) {
@@ -323,7 +350,7 @@
       if (el) {
         slot.classList.add('active');
         slot.querySelector('.emoji').innerText = el.emoji;
-        slot.querySelector('.name').innerText = el.name || el.nombre;
+        slot.querySelector('.name').innerText = el.nombre;
       } else {
         slot.classList.remove('active');
         slot.querySelector('.emoji').innerText = '❓';
@@ -336,7 +363,7 @@
       if (num === 2) { slot2 = null; actualizarSlotUI(2, null); }
     }
 
-    function ejecutarFusion() {
+    async function ejecutarFusion() {
       if (!slot1 || !slot2) {
         alert('Por favor selecciona 2 elementos de la lista derecha para hacer la combinación.');
         return;
@@ -344,84 +371,90 @@
 
       const resBox = document.getElementById('resultBox');
       resBox.style.display = 'block';
-      document.getElementById('resNombre').innerText = "Analizando reacción...";
-      document.getElementById('resEmoji').innerText = "⚡";
+      document.getElementById('resNombre').innerText = "Consultando a Gemini...";
+      document.getElementById('resEmoji').innerText = "⏳";
       document.getElementById('resFormula').innerText = "";
-      document.getElementById('resDesc').innerText = "Calculando matriz de enlaces y termodinámica...";
+      document.getElementById('resDesc').innerText = "Analizando reacción química y termodinámica en tiempo real...";
       document.getElementById('resExplicacion').innerText = "";
 
-      setTimeout(() => {
-        const resultado = motorCientificoReal(slot1, slot2);
-        mostrarResultado(resultado);
-      }, 300);
+      const apiKey = localStorage.getItem('gemini_api_key');
+
+      if (!apiKey || apiKey === "") {
+        mostrarResultadoError("Falta la Clave API", "Por favor ingresa tu Clave API de Google AI Studio en la casilla superior derecha de la página.");
+        return;
+      }
+
+      try {
+        const resultadoAI = await llamarGeminiAPI(slot1.nombre, slot2.nombre, apiKey);
+        mostrarResultado(resultadoAI);
+      } catch (err) {
+        console.error("Error detallado:", err);
+        mostrarResultadoError("Error al conectar con Gemini", "Detalle técnico: " + err.message + ". Verifica que tu Clave API sea correcta.");
+      }
     }
 
-    function motorCientificoReal(e1, e2) {
-      const n1 = e1.nombre.toLowerCase();
-      const n2 = e2.nombre.toLowerCase();
-      const par = [n1, n2];
+    async function llamarGeminiAPI(el1, el2, key) {
+      const prompt = `Actúa como un simulador de química educativo de nivel secundario. Analiza la interacción científica entre "${el1}" y "${el2}". Devuelve estrictamente un objeto JSON válido con las siguientes claves: "nombreResultante" (string con el nombre del compuesto o resultado), "emoji" (un emoji representativo), "formulaQuimica" (ecuación o fórmula química), "mecanismoReaccion" (breve descripción de la reacción), "explicacionCientifica" (explicación pedagógica para estudiantes).`;
 
-      // 1. REACCIONES CLAVE ESPECÍFICAS
-      if (par.includes('vinagre') && par.includes('bicarbonato de sodio')) {
-        return { nombreResultante: "Acetato de Sodio y Gas CO2", emoji: "🌋", formulaQuimica: "NaHCO3 + CH3COOH -> NaCH3COO + H2O + CO2", mecanismoReaccion: "Reacción ácido-base de neutralización con efervescencia.", explicacionCientifica: "El ácido acético reacciona con el bicarbonato liberando dióxido de carbono en forma de gas rápidamente." };
-      }
-      if (par.includes('agua') && par.includes('fuego')) {
-        return { nombreResultante: "Vapor Térmico", emoji: "♨️", formulaQuimica: "H2O(l) + Calor -> H2O(g)", mecanismoReaccion: "Cambio de estado físico endotérmico.", explicacionCientifica: "El agua absorbe la energía térmica superando su calor latente de vaporización y pasa a estado gaseoso." };
-      }
-      if (par.includes('hierro') && par.includes('oxígeno')) {
-        return { nombreResultante: "Óxido de Hierro (Herrumbre)", emoji: "🧱", formulaQuimica: "4Fe + 3O2 -> 2Fe2O3", mecanismoReaccion: "Proceso redox de oxidación atmosférica.", explicacionCientifica: "Los átomos de hierro pierden electrones al unirse con el oxígeno en presencia de humedad, formando óxido férrico." };
-      }
-      if (par.includes('aire') && par.includes('fuego')) {
-        return { nombreResultante: "Combustión Acelerada", emoji: "🔥", formulaQuimica: "Combustible + O2 -> CO2 + H2O + Calor", mecanismoReaccion: "Reacción exotérmica de oxidación rápida.", explicacionCientifica: "El suministro continuo de oxígeno (comburente) alimenta las reacciones de oxidación del fuego, incrementando la temperatura y la llama." };
-      }
-      if (par.includes('aire') && par.includes('agua')) {
-        return { nombreResultante: "Humedad y Condensación", emoji: "🌧️", formulaQuimica: "H2O(g) <-> H2O(l)", mecanismoReaccion: "Equilibrio higrométrico y cambio de fase.", explicacionCientifica: "El aire transporta vapor de agua invisible que al entrar en contacto con superficies frías se condensa formando rocío o lluvia." };
-      }
-      if (par.includes('aire') && par.includes('tierra')) {
-        return { nombreResultante: "Esoil / Erosión Eólica", emoji: "🌪️", formulaQuimica: "Partículas sólidas suspendidas en gas", mecanismoReaccion: "Acción mecánica de fluidos sobre superficies.", explicacionCientifica: "Las corrientes de aire en movimiento ejercen fricción sobre la corteza terrestre, transportando sedimentos y modelando el relieve." };
-      }
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: "OBJECT",
+              properties: {
+                nombreResultante: { type: "STRING" },
+                emoji: { type: "STRING" },
+                formulaQuimica: { type: "STRING" },
+                mecanismoReaccion: { type: "STRING" },
+                explicacionCientifica: { type: "STRING" }
+              },
+              required: ["nombreResultante", "emoji", "formulaQuimica", "mecanismoReaccion", "explicacionCientifica"]
+            }
+          }
+        })
+      });
 
-      // 2. REACCIONES DINÁMICAS INTELIGENTES SEGÚN LA CATEGORÍA SI NO ES UNA COMBINACIÓN DIRECTA
-      if (e1.cat === 'Energía' || e2.cat === 'Energía') {
-        return {
-          nombreResultante: `Plasma o Campo de ${e1.nombre} y ${e2.nombre}`,
-          emoji: '⚡',
-          formulaQuimica: `E = mc² + [${e1.nombre.slice(0,3)}-${e2.nombre.slice(0,3)}]`,
-          mecanismoReaccion: `Excitación energética e ionización de partículas.`,
-          explicacionCientifica: `La introducción de energía altera los niveles cuánticos de los electrones en ${e1.nombre} y ${e2.nombre}, generando un estado excitado o transferencia de fotones y calor.`
-        };
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
 
-      if (e1.cat === 'Biología' || e2.cat === 'Biología') {
-        return {
-          nombreResultante: `Sustrato Orgánico de ${e1.nombre}`,
-          emoji: '🧬',
-          formulaQuimica: `BioComplex[${e1.nombre.slice(0,3)}·${e2.nombre.slice(0,3)}]`,
-          mecanismoReaccion: `Metabolismo celular y catálisis enzimática.`,
-          explicacionCientifica: `Los componentes bioquímicos interactúan a nivel molecular, estimulando rutas metabólicas, síntesis de proteínas o descomposición orgánica según el medio acuoso.`
-        };
+      const data = await response.json();
+      if (!data.candidates || !data.candidates[0].content) {
+        throw new Error("Respuesta inválida de la API de Gemini");
       }
+      const rawJson = data.candidates[0].content.parts[0].text;
+      return JSON.parse(rawJson);
+    }
 
-      // Respuesta general de respaldo química única y detallada
-      return {
-        nombreResultante: `Compuesto Sintetizado de ${e1.nombre} y ${e2.nombre}`,
-        emoji: e2.emoji,
-        formulaQuimica: `Chem[${e1.nombre.slice(0,2).toUpperCase()}_${e2.nombre.slice(0,2).toUpperCase()}]`,
-        mecanismoReaccion: `Enlace covalente/iónico mixto entre ${e1.nombre} y ${e2.nombre}.`,
-        explicacionCientifica: `Al interactuar ${e1.nombre} con ${e2.nombre}, se produce un reordenamiento de la nube electrónica exterior. La valencia de los átomos busca la estabilidad energética mediante fuerzas intermoleculares.`
-      };
+    function mostrarResultadoError(titulo, detalle) {
+      document.getElementById('resNombre').innerText = titulo;
+      document.getElementById('resEmoji').innerText = "⚠️";
+      document.getElementById('resFormula').innerText = "Atención requerida";
+      document.getElementById('resDesc').innerText = "No se pudo completar la consulta en vivo.";
+      document.getElementById('resExplicacion').innerText = detalle;
     }
 
     function mostrarResultado(res) {
       document.getElementById('resNombre').innerText = res.nombreResultante;
       document.getElementById('resEmoji').innerText = res.emoji;
-      document.getElementById('resFormula').innerText = res.formulaQuimica ? `Fórmula/Modelo: ${res.formulaQuimica}` : '';
+      document.getElementById('resFormula').innerText = res.formulaQuimica ? `Fórmula/Símbolo: ${res.formulaQuimica}` : '';
       document.getElementById('resDesc').innerText = res.mecanismoReaccion;
       document.getElementById('resExplicacion').innerText = res.explicacionCientifica;
 
       const yaExiste = miInventario.some(e => e.nombre.toLowerCase() === res.nombreResultante.toLowerCase());
       if (!yaExiste) {
-        miInventario.unshift({ id: 'ia_' + Date.now(), nombre: res.nombreResultante, emoji: res.emoji, cat: 'Nuevos Descubrimientos' });
+        const nuevoObj = {
+          id: 'desc_' + Date.now(),
+          nombre: res.nombreResultante,
+          emoji: res.emoji,
+          cat: 'Descubrimientos'
+        };
+        miInventario.unshift(nuevoObj);
         renderizarElementos(miInventario);
       }
     }
